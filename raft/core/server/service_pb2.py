@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'\n\035io.grpc.examples.raft_serviceB\020RaftServiceProtoP\001\242\002\003RSP',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\rservice.proto\x12\x0craft_service\"0\n\x12\x43lientWriteRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x88\x01\n\x14\x41ppendEntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x10\n\x08leaderId\x18\x02 \x01(\t\x12\x14\n\x0cprevLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0bprevLogTerm\x18\x04 \x01(\x05\x12\x0f\n\x07\x65ntries\x18\x05 \x03(\t\x12\x14\n\x0cleaderCommit\x18\x06 \x01(\x05\"3\n\x12\x41ppendEntriesReply\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x0f\n\x07success\x18\x02 \x01(\x08\"#\n\x10\x43lientWriteReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\"b\n\x12RequestVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x13\n\x0b\x63\x61ndidateId\x18\x02 \x01(\t\x12\x14\n\x0clastLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0blastLogTerm\x18\x04 \x01(\x05\"5\n\x10RequestVoteReply\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x13\n\x0bvoteGranted\x18\x02 \x01(\x08\x32\x8c\x02\n\x0bRaftService\x12W\n\rAppendEntries\x12\".raft_service.AppendEntriesRequest\x1a .raft_service.AppendEntriesReply\"\x00\x12Q\n\x0bRequestVote\x12 .raft_service.RequestVoteRequest\x1a\x1e.raft_service.RequestVoteReply\"\x00\x12Q\n\x0b\x43lientWrite\x12 .raft_service.ClientWriteRequest\x1a\x1e.raft_service.ClientWriteReply\"\x00\x42\x39\n\x1dio.grpc.examples.raft_serviceB\x10RaftServiceProtoP\x01\xa2\x02\x03RSPb\x06proto3'
+  serialized_pb=b'\n\rservice.proto\x12\x0craft_service\"0\n\x12\x43lientWriteRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x88\x01\n\x14\x41ppendEntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x10\n\x08leaderId\x18\x02 \x01(\t\x12\x14\n\x0cprevLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0bprevLogTerm\x18\x04 \x01(\x05\x12\x0f\n\x07\x65ntries\x18\x05 \x03(\t\x12\x14\n\x0cleaderCommit\x18\x06 \x01(\x05\"3\n\x12\x41ppendEntriesReply\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x0f\n\x07success\x18\x02 \x01(\x08\"5\n\x10\x43lientWriteReply\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x10\n\x08redirect\x18\x02 \x01(\t\"b\n\x12RequestVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x13\n\x0b\x63\x61ndidateId\x18\x02 \x01(\t\x12\x14\n\x0clastLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0blastLogTerm\x18\x04 \x01(\x05\"5\n\x10RequestVoteReply\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x13\n\x0bvoteGranted\x18\x02 \x01(\x08\x32\x8c\x02\n\x0bRaftService\x12W\n\rAppendEntries\x12\".raft_service.AppendEntriesRequest\x1a .raft_service.AppendEntriesReply\"\x00\x12Q\n\x0bRequestVote\x12 .raft_service.RequestVoteRequest\x1a\x1e.raft_service.RequestVoteReply\"\x00\x12Q\n\x0b\x43lientWrite\x12 .raft_service.ClientWriteRequest\x1a\x1e.raft_service.ClientWriteReply\"\x00\x42\x39\n\x1dio.grpc.examples.raft_serviceB\x10RaftServiceProtoP\x01\xa2\x02\x03RSPb\x06proto3'
 )
 
 
@@ -185,6 +185,13 @@ _CLIENTWRITEREPLY = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='redirect', full_name='raft_service.ClientWriteReply.redirect', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -198,7 +205,7 @@ _CLIENTWRITEREPLY = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=273,
-  serialized_end=308,
+  serialized_end=326,
 )
 
 
@@ -250,8 +257,8 @@ _REQUESTVOTEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=310,
-  serialized_end=408,
+  serialized_start=328,
+  serialized_end=426,
 )
 
 
@@ -289,8 +296,8 @@ _REQUESTVOTEREPLY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=410,
-  serialized_end=463,
+  serialized_start=428,
+  serialized_end=481,
 )
 
 DESCRIPTOR.message_types_by_name['ClientWriteRequest'] = _CLIENTWRITEREQUEST
@@ -353,8 +360,8 @@ _RAFTSERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=466,
-  serialized_end=734,
+  serialized_start=484,
+  serialized_end=752,
   methods=[
   _descriptor.MethodDescriptor(
     name='AppendEntries',

@@ -1,11 +1,13 @@
 import time
 import threading
 import random
+
 from core.states import Leader, Follower, Candidate
-from .storage import RAMStorage
+from core.storage import RAMStorage
 
 from .service_pb2_grpc import RaftServiceServicer, RaftServiceStub
-from .service_pb2 import AppendEntriesReply, RequestVoteReply, AppendEntriesRequest, RequestVoteRequest, ClientWriteReply
+from .service_pb2 import AppendEntriesReply, RequestVoteReply, ClientWriteReply
+from .service_pb2 import AppendEntriesRequest, RequestVoteRequest
 import grpc
 
 BASE_TIMEOUT_THRESHOLD = 8
@@ -18,6 +20,7 @@ class RPCServer(RaftServiceServicer):
         self._state = Follower(identity)
         self.peers = peers
         self.store = RAMStorage()
+        self.leader_id = "NA.SERVICE.UNAVAILABLE"
 
         self._last_call_received_ts = time.time()
         self._next_randomize_election_to = self.randomized_timeout()
@@ -42,6 +45,7 @@ class RPCServer(RaftServiceServicer):
             if not type(self._state) is Leader:
                 if now - self._last_call_received_ts > self._next_randomize_election_to:
                     print("{} timeout".format(self._state))
+                    self.leader_id = "NA.SERVICE.UNAVAILABLE"
                     self._next_randomize_election_to = self.randomized_timeout()
                     self._last_call_received_ts = now
                     self._state = Candidate(self.identity,
@@ -54,6 +58,8 @@ class RPCServer(RaftServiceServicer):
                                               self.store.last_log_index,
                                               self.store.last_log_term,
                                               self.send_request_vote):
+
+                            self.leader_id = self.identity
 
                             self._state = Leader(self.identity,
                                                  self.peers,
@@ -143,36 +149,44 @@ class RPCServer(RaftServiceServicer):
 
     def AppendEntries(self, request, context):
         self._last_call_received_ts = time.time()
+        self._state.voted_for = None
         if type(self._state) is Follower:
+            self.leader_id = request.leaderId
             print("{} receive AppendEntries, prevLogIndex: {}, prevLogTerm:{}, entries: {}".format(
                 self._state,
                 request.prevLogIndex,
                 request.prevLogTerm,
                 request.entries
             ))
-            # Reply false if term < currentTerm(§5.1)
+            # 1. Reply false if term < currentTerm(§5.1)
             if request.term >= self._state.current_term:
                 self._next_randomize_election_to = self.randomized_timeout()
                 self._state.current_term = request.term
             else:
                 return AppendEntriesReply(term=self._state.current_term, success=False)
 
+            if request.prevLogTerm != self.store.get_log_term_by_index(request.prevLogIndex):
+                # 2. Reply false if log doesn’t contain an entry at prevLogIndex
+                # whose term matches prevLogTerm (§5.3)
+                # 3. If an existing entry conflicts with a new one (same index
+                # but different terms), delete the existing entry and all that
+                # follow it (§5.3)
+                self.store.delete_entry_to_index_exclusively(request.prevLogIndex)
+                return AppendEntriesReply(term=self._state.current_term, success=False)
+
             if len(request.entries) != 0:
-                if request.prevLogTerm != self.store.get_log_term_by_index(request.prevLogIndex):
-                    self.store.delete_entry_to_index_exclusively(request.prevLogIndex)
-                    return AppendEntriesReply(term=self._state.current_term, success=False)
-                else:
-                    # 1. If two entries in different logs have the same index and term,
-                    # then they store the same command.
-                    # 2. If two entries in different logs have the same index and term,
-                    # then the logs are identical in all preceding entries.
-                    self.store.store_entries_from_index(request.prevLogIndex, self._state.current_term, request.entries)
+                # If two entries in different logs have the same index and term,
+                # then they store the same command.
+                # If two entries in different logs have the same index and term,
+                # then the logs are identical in all preceding entries.
+                # 4. Append any new entries not already in the log
+                self.store.store_entries_from_index(request.prevLogIndex, request.entries)
 
             if request.leaderCommit > self._state.committed_index:
+                # 5. If leaderCommit > commitIndex, set commitIndex =
+                # min(leaderCommit, index of last new entry)
                 commit_index = min(request.leaderCommit, self.store.last_log_index)
                 self._state.committed_index = commit_index
-            else:
-                print("{} receive heartbeat".format(self.identity))
 
             return AppendEntriesReply(term=self._state.current_term, success=True)
 
@@ -188,7 +202,6 @@ class RPCServer(RaftServiceServicer):
         return AppendEntriesReply(term=self._state.current_term, success=False)
 
     def RequestVote(self, request, context):
-        self._last_call_received_ts = time.time()
         if type(self._state) is Follower:
             # Reply false if term < currentTerm (§5.1)
             if request.term < self._state.current_term:
@@ -213,6 +226,9 @@ class RPCServer(RaftServiceServicer):
                         request.lastLogIndex >= self.store.last_log_index:
 
                     self._state.voted_for = request.candidateId
+
+                    # [Roman:] refresh only when vote request is valid
+                    self._last_call_received_ts = time.time()
                     return RequestVoteReply(term=self._state.current_term, voteGranted=True)
 
         self._state.voted_for = None
@@ -230,10 +246,9 @@ class RPCServer(RaftServiceServicer):
         if type(self._state) is Leader:
             self.store.store_entries_from_index(
                 self.store.last_log_index,
-                self._state.current_term,
-                ["{}$#${}".format(request.key, request.value)]
+                ["{}:{};;term:{}".format(request.key, request.value, self._state.current_term)],
             )
 
-            return ClientWriteReply(success=True)
+            return ClientWriteReply(success=True, redirect=self.leader_id)
         else:
-            return ClientWriteReply(success=False)
+            return ClientWriteReply(success=False, redirect=self.leader_id)

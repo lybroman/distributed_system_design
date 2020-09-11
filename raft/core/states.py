@@ -77,7 +77,7 @@ class Leader(BaseState):
             for peer in self.match_index:
                 if self.match_index[peer] >= N:
                     cnt += 1
-                if cnt >= len(peers) // 2:
+                if cnt > max(len(peers) // 2 - 1, 0):
                     self.committed_index = N
                     break
             else:
