@@ -1,0 +1,22 @@
+version: "3.0"
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "root123"
+      MYSQL_DATABASE: "election"
+    ports:
+      - 3306:3306
+
+  consul-agent:
+    image: consul:latest
+    ports:
+      - "8500:8500"
+      - "8600:8600"
+
+  zookeeper:
+    image: zookeeper:3.4
+    ports:
+      - "2181:2181"
